@@ -19,13 +19,17 @@ import re
 import sys
 import urllib.request as url
 
-__VERSION__ = '0.1'
+__VERSION__ = '0.2'
 
 
 def parse_cli_args():
     parser = argparse.ArgumentParser(description="Search "
                                      "typos in files and websites "
                                      "by using Yandex.Speller API")
+    parser.add_argument("-r", "--recursive", dest="recursive",
+                        required=False, action="store_true",
+                        help="search recursively")
+
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-f", "--file", dest="filename",
                        metavar="FILE", default=False,
@@ -53,6 +57,7 @@ class YaSpellParser(object):
         self.MAX_REQ_PER_DAY = 10000
         self.MIN_WORD_LEN = 3
         self.word_dict = {}
+        self.f_list = []
         self.sent = False
         self.stat = {'max_fact_req_len': 0,
                      'total_requests': 0,
@@ -64,17 +69,25 @@ class YaSpellParser(object):
                      'words_len': 0,
                      'total_words_len': 0}
 
-    def __get_files_from_dir(self, path):
+    def __get_flist_recursiv(self, path):
         # Add exception handling and checks
-        f_list = []
         try:
             for root, dirs, files in os.walk(path):
                 for f in files:
-                    f_list.append(os.path.join(root, f))
+                    self.f_list.append(os.path.join(root, f))
 
-            return f_list
         except Exception as e:
             pass
+
+    def __get_flist(self, path):
+        if os.path.isdir(path):
+            for i in os.listdir(path):
+                i = path+'/'+i
+                if os.path.isfile(i):
+                    self.f_list.append(i)
+        else:
+            sys.stderr.write('DIR is not a directory\n')
+            sys.exit(1)
 
     def __is_binary(self, fname):
         # Add exception handling and checks
@@ -221,8 +234,13 @@ class YaSpellParser(object):
         self.__parse_file(fname)
         self.__finish_parse()
 
-    def parse_dir(self, directory):
-        for f in self.__get_files_from_dir(directory):
+    def parse_dir(self, directory, recursive=False):
+        if not recursive:
+            self.__get_flist(directory)
+        else:
+            self.__get_flist_recursiv(directory)
+
+        for f in self.f_list:
             self.__parse_file(f)
 
         self.__finish_parse()
@@ -258,7 +276,7 @@ def main():
         parser.parse_file(args.filename)
 
     if args.directory:
-        parser.parse_dir(args.directory)
+        parser.parse_dir(args.directory, args.recursive)
 
     if args.html:
         print('Functionality development is in progress\n')

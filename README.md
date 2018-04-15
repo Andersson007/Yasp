@@ -7,7 +7,7 @@ Author: Andrey Klychkov <aaklychkov@mail.ru>
 
 Licence: GNU GPL v3
 
-Version: 0.1
+Version: 0.2
 
 Date: 14-04-2018
 
@@ -15,7 +15,7 @@ Date: 14-04-2018
 
 Information about Yandex.Speller is here <https://tech.yandex.ru/speller>.
 
-Search typos in a file "-f", files in a directory "-d" (recursively) is available.
+Search typos in a file "-f", files in a directory "-d" (with "-r" recursively) is available.
 
 Search in websites "-u" is not available yet.
 
@@ -24,7 +24,7 @@ Python 3+, Internet connection
 
 ### Synopsis:
 ```
-yasp [-h] [-f FILE | -d DIR | -u URL | --version]
+yasp [-h] [-f FILE | -d DIR | -u URL | --version] [-r]
 ```
 
 ### Options:
@@ -32,6 +32,7 @@ yasp [-h] [-f FILE | -d DIR | -u URL | --version]
   -h, --help            show this help message and exit
   -f FILE, --file FILE  path to a FILE
   -d DIR, --dir DIR     path to a DIR
+  -r, --recursive       search recursively
   -u URL, --url URL     path to a web page (NOT AVAILABLE YET)
   --version             show version and exit
 ```
@@ -62,7 +63,7 @@ max request len: 4074
 execution time: 0:00:01.574109
 ```
 
-yasp -d testdir
+yasp -d testdir -r
 ```
 response from Yandex received in 0:00:04.273587
 
