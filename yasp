@@ -3,7 +3,7 @@
 # websites by using Yandex.Speller API
 #
 # Author: Andrey Klychkov <aakychkov@mail.ru>
-# Date: 14-04-2018
+# Date: 16-04-2018
 #
 # IMPORTANT:
 # 1. Max request length is 10000 characters
@@ -19,7 +19,7 @@ import re
 import sys
 import urllib.request as url
 
-__VERSION__ = '0.2'
+__VERSION__ = '0.3'
 
 
 def parse_cli_args():
@@ -254,10 +254,14 @@ class YaSpellParser(object):
 
     def print_stat(self):
         exec_time = datetime.datetime.now() - self.start_time
-        print('\nTotal statistics:\n----------------\n'
-              'lines: %s\nwords num: %s\nparsed words (alph, >%s symb): %s\n'
-              'uniq words: %s\nchars request: %s\n'
-              'requests to Yandex: %s\nmax request len: %s\n'
+        print('\nTotal statistics:\n'
+              '----------------\n'
+              'lines: %s\nwords num: %s\n'
+              'parsed words (alph, >%s symb): %s\n'
+              'uniq words: %s\n'
+              'chars request: %s\n'
+              'requests to Yandex: %s\n'
+              'max request len: %s\n'
               'execution time: %s\n' % (self.stat['total_lines'],
                                         self.stat['total_word_num'],
                                         (self.MIN_WORD_LEN - 1),
