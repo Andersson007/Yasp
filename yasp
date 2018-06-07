@@ -19,6 +19,13 @@ import re
 import sys
 import urllib.request as url
 
+try:
+    from bs4 import BeautifulSoup
+except ImportError as e:
+    print(e, "Hint: use pip3 install beautifulsoup4 html5lib lxml")
+    sys.exit(1)
+
+
 __VERSION__ = '0.3'
 
 
@@ -113,28 +120,19 @@ class YaSpellParser(object):
 
         return False
 
-    def __get_html(self, link):
+    def get_html(self, link):
         # For parsing html,
         # In the beginning of development
         #
         response = url.urlopen(link)
-        data = response.read().decode('utf-8')
-
+        #soup = BeautifulSoup(response, "html.parser")
+        soup = BeautifulSoup(response, "lxml")
+        data = soup.findAll(text=True)
         symb = re.compile('<|>|=|--')
-
-        # Попробовать сначала разбить
-        # не по символу новой строки,
-        # например по > или еще какому-нибудь
-
-        for line in data.split('>'):
-            print(line)
-            #if line:
-            #    for w in line.split(' '):
-            #        print(w)
-            #        if w and not symb.search(w):
-            #            w = w.strip(',.')
-            #            if w.isalpha() and len(w) > 2:
-            #                print(w)
+        # For test code below:
+        for line in data:
+            if line and line != '\n':
+                print(line)
 
     def __check_word(self, word):
         for w in word:
@@ -283,8 +281,7 @@ def main():
         parser.parse_dir(args.directory, args.recursive)
 
     if args.html:
-        print('Functionality development is in progress\n')
-        sys.exit(0)  # Comment sys.exit(0) during tests
+        #In development
         parser.get_html(args.html)
 
     parser.print_stat()
