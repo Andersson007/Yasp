@@ -55,6 +55,64 @@ def parse_cli_args():
 args = parse_cli_args()
 
 
+def is_binary(fname):
+    # Add exception handling and checks
+    READ_BYTES = 512
+    try:
+        fp = open(fname, 'r')
+    except Exception as e:
+        if fp:
+            fp.close()
+        print(e)
+        sys.stderr.write('my exception handling here')
+        sys.exit(1)
+
+    try:
+        f_data = fp.read(READ_BYTES)
+    except UnicodeDecodeError:
+        fp.close()
+        return True
+
+    if '\x00' in f_data:
+        fp.close()
+        return True
+
+    return False
+
+
+class FileList(object):
+    def __init__(self, path):
+        self.path = path
+        self.file_list = []
+
+    def get(self, recursive=False):
+        if not recursive:
+            if os.path.isdir(self.path):
+                for i in os.listdir(self.path):
+                    i = self.path+'/'+i
+                    if os.path.isfile(i):
+                        self.file_list.append(i)
+            else:
+                sys.stderr.write('DIR is not a directory\n')
+                sys.exit(1)
+
+        else:
+            try:
+                for root, dirs, files in os.walk(self.path):
+                    for f in files:
+                        self.file_list.append(os.path.join(root, f))
+
+            except Exception as e:
+                pass  # Handle exceptions here
+
+        return self.file_list
+
+
+class Parser(object):
+    pass
+    #def __init__(self):
+
+
 class YaSpellParser(object):
     def __init__(self):
         self.start_time = datetime.datetime.now()
@@ -64,7 +122,7 @@ class YaSpellParser(object):
         self.MAX_REQ_PER_DAY = 10000
         self.MIN_WORD_LEN = 3
         self.word_dict = {}
-        self.f_list = []
+        self.file_list = []
         self.sent = False
         self.stat = {'max_fact_req_len': 0,
                      'total_requests': 0,
@@ -76,51 +134,8 @@ class YaSpellParser(object):
                      'words_len': 0,
                      'total_words_len': 0}
 
-    def __get_flist_recursiv(self, path):
-        # Add exception handling and checks
-        try:
-            for root, dirs, files in os.walk(path):
-                for f in files:
-                    self.f_list.append(os.path.join(root, f))
 
-        except Exception as e:
-            pass
-
-    def __get_flist(self, path):
-        if os.path.isdir(path):
-            for i in os.listdir(path):
-                i = path+'/'+i
-                if os.path.isfile(i):
-                    self.f_list.append(i)
-        else:
-            sys.stderr.write('DIR is not a directory\n')
-            sys.exit(1)
-
-    def __is_binary(self, fname):
-        # Add exception handling and checks
-        READ_BYTES = 512
-        try:
-            fp = open(fname, 'r')
-        except Exception as e:
-            if fp:
-                fp.close()
-            print(e)
-            sys.stderr.write('my exception handling here')
-            sys.exit(1)
-
-        try:
-            f_data = fp.read(READ_BYTES)
-        except UnicodeDecodeError:
-            fp.close()
-            return True
-
-        if '\x00' in f_data:
-            fp.close()
-            return True
-
-        return False
-
-    def get_html(self, link):
+    def parse_html(self, link):
         # For parsing html,
         # In the beginning of development
         #
@@ -129,10 +144,11 @@ class YaSpellParser(object):
         soup = BeautifulSoup(response, "lxml")
         data = soup.findAll(text=True)
         symb = re.compile('<|>|=|--')
-        # For test code below:
+        # For test code below {
         for line in data:
             if line and line != '\n':
                 print(line)
+        # } end of test block
 
     def __check_word(self, word):
         for w in word:
@@ -169,7 +185,7 @@ class YaSpellParser(object):
             print('%s : line %s : %s > %s ' % (i[0], i[1], i[2], i[3]))
 
     def __parse_file(self, fname):
-        if self.__is_binary(fname):
+        if is_binary(fname):
             return False
 
         fp = open(fname, 'r')
@@ -233,12 +249,10 @@ class YaSpellParser(object):
         self.__finish_parse()
 
     def parse_dir(self, directory, recursive=False):
-        if not recursive:
-            self.__get_flist(directory)
-        else:
-            self.__get_flist_recursiv(directory)
+        files = FileList(directory)
+        self.file_list = files.get(recursive)
 
-        for f in self.f_list:
+        for f in self.file_list:
             self.__parse_file(f)
 
         self.__finish_parse()
@@ -282,7 +296,7 @@ def main():
 
     if args.html:
         #In development
-        parser.get_html(args.html)
+        parser.parse_html(args.html)
 
     parser.print_stat()
 
