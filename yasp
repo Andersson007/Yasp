@@ -26,7 +26,7 @@ except ImportError as e:
     sys.exit(1)
 
 
-__VERSION__ = '0.3'
+__VERSION__ = '0.4'
 
 
 def parse_cli_args():
@@ -51,6 +51,7 @@ def parse_cli_args():
                        version=__VERSION__,
                        help="show version and exit")
     return parser.parse_args()
+
 
 args = parse_cli_args()
 
@@ -118,6 +119,7 @@ class YaSpellParser(object):
         self.MIN_WORD_LEN = 3
         self.word_dict = {}
         self.file_list = []
+        self.line_num = 0
         self.sent = False
         self.stat = {'max_fact_req_len': 0,
                      'total_requests': 0,
@@ -129,20 +131,21 @@ class YaSpellParser(object):
                      'words_len': 0,
                      'total_words_len': 0}
 
-    def parse_html(self, link):
-        # For parsing html,
-        # In the beginning of development
-        #
+    def __parse_html(self, link):
         response = url.urlopen(link)
-        #soup = BeautifulSoup(response, "html.parser")
         soup = BeautifulSoup(response, "lxml")
         data = soup.findAll(text=True)
-        symb = re.compile('<|>|=|--')
-        # For test code below {
+
+        data = list(data)
+        result = []
+        self.line_num = 1
         for line in data:
-            if line and line != '\n':
-                print(line)
-        # } end of test block
+            self.__parse_line(str(line), 'url')
+
+        self.stat['total_lines'] += self.line_num
+
+        if not self.stat['parsed_word_num']:
+            print("%s: nothing to parse" % link)
 
     def __check_word(self, word):
         for w in word:
@@ -178,78 +181,68 @@ class YaSpellParser(object):
         for i in sorted(typos_list, key=lambda x: (x[0], x[1])):
             print('%s : line %s : %s > %s ' % (i[0], i[1], i[2], i[3]))
 
+    def __parse_line(self, line, source):
+        split_line = line.split()
+        for word in split_line:
+            self.stat['total_word_num'] += 1
+            word = word.rstrip('\'"-!?.,`)]>').lstrip('\'`"[(<-')
+
+            if len(word) < self.MIN_WORD_LEN:
+                continue
+
+            if self.__check_word(word) is False:
+                continue
+
+            self.stat['parsed_word_num'] += 1
+            word = word.lower()
+
+            if word not in self.word_dict:
+                self.word_dict[word] = [[source], [self.line_num]]
+                self.stat['word_in_dict'] += 1
+                # +6 symbols for the additional
+                # '&text=' str in request body:
+                self.stat['words_len'] += (len(word) + 6)
+            else:
+                if self.line_num not in self.word_dict[word][1]:
+                    self.word_dict[word][1].append(self.line_num)
+                else:
+                    continue
+
+            if self.stat['words_len'] > self.MAX_REQ_LEN:
+                self.__ask_yaspell()
+                self.word_dict = {}
+                self.stat['total_uniq_words'] += self.stat['word_in_dict']
+                self.stat['word_in_dict'] = 0
+                self.stat['total_words_len'] += self.stat['words_len']
+                self.stat['words_len'] = 0
+                self.stat['total_requests'] += 1
+                self.sent = True
+
+            if self.stat['total_requests'] >= self.MAX_REQ_PER_DAY:
+                print('Max request per day (%s)' % self.MAX_REQ_PER_DAY)
+                break
+
+        if self.word_dict:
+            self.sent = False
+
+        self.line_num += 1
+
     def __parse_file(self, fname):
         if is_binary(fname):
             return False
 
         fp = open(fname, 'r')
 
-        line_num = 1
+        self.line_num = 1
 
         for line in fp:
-            split_line = line.split()
-            for word in split_line:
-                self.stat['total_word_num'] += 1
-                word = word.rstrip('\'"-!?.,`)]>').lstrip('\'`"[(<-')
+            self.__parse_line(line, fname)
 
-                if len(word) < self.MIN_WORD_LEN:
-                    continue
-
-                if self.__check_word(word) is False:
-                    continue
-
-                self.stat['parsed_word_num'] += 1
-                word = word.lower()
-
-                if word not in self.word_dict:
-                    self.word_dict[word] = [[fname], [line_num]]
-                    self.stat['word_in_dict'] += 1
-                    # +6 symbols for the additional
-                    # '&text=' str in request body:
-                    self.stat['words_len'] += (len(word) + 6)
-                else:
-                    if line_num not in self.word_dict[word][1]:
-                        self.word_dict[word][1].append(line_num)
-                    else:
-                        continue
-
-                if self.stat['words_len'] > self.MAX_REQ_LEN:
-                    self.__ask_yaspell()
-                    self.word_dict = {}
-                    self.stat['total_uniq_words'] += self.stat['word_in_dict']
-                    self.stat['word_in_dict'] = 0
-                    self.stat['total_words_len'] += self.stat['words_len']
-                    self.stat['words_len'] = 0
-                    self.stat['total_requests'] += 1
-                    self.sent = True
-
-                if self.stat['total_requests'] >= self.MAX_REQ_PER_DAY:
-                    print('Max request per day (%s)' % self.MAX_REQ_PER_DAY)
-                    break
-
-            if self.word_dict:
-                self.sent = False
-
-            line_num += 1
-
-        self.stat['total_lines'] += line_num
+        self.stat['total_lines'] += self.line_num
         fp.close()
 
         if not self.stat['parsed_word_num']:
             print("%s: nothing to parse" % fname)
-
-    def parse_file(self, fname):
-        self.__parse_file(fname)
-        self.__finish_parse()
-
-    def parse_dir(self, directory, recursive=False):
-        files = FileList(directory)
-        self.file_list = files.get(recursive)
-
-        for f in self.file_list:
-            self.__parse_file(f)
-
-        self.__finish_parse()
 
     def __finish_parse(self):
         if not self.sent:
@@ -258,6 +251,9 @@ class YaSpellParser(object):
             self.stat['total_words_len'] += self.stat['words_len']
             self.stat['total_uniq_words'] += self.stat['word_in_dict']
 
+    ###################################
+    # There are class interfaces below:
+    ###################################
     def print_stat(self):
         exec_time = datetime.datetime.now() - self.start_time
         print('\nTotal statistics:\n'
@@ -278,6 +274,23 @@ class YaSpellParser(object):
                                         self.stat['max_fact_req_len'],
                                         exec_time))
 
+    def parse_file(self, fname):
+        self.__parse_file(fname)
+        self.__finish_parse()
+
+    def parse_dir(self, directory, recursive=False):
+        files = FileList(directory)
+        self.file_list = files.get(recursive)
+
+        for f in self.file_list:
+            self.__parse_file(f)
+
+        self.__finish_parse()
+
+    def parse_html(self, link):
+        self.__parse_html(link)
+        self.__finish_parse()
+
 
 def main():
     parser = YaSpellParser()
@@ -289,7 +302,6 @@ def main():
         parser.parse_dir(args.directory, args.recursive)
 
     if args.html:
-        #In development
         parser.parse_html(args.html)
 
     parser.print_stat()

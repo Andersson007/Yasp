@@ -7,20 +7,20 @@ Author: Andrey Klychkov <aaklychkov@mail.ru>
 
 Licence: GNU GPL v3
 
-Version: 0.2
+Version: 0.4
 
-Date: 14-04-2018
+Date: 10-06-2018
 
 ### Description:
 
 Information about Yandex.Speller is here <https://tech.yandex.ru/speller>.
 
-Search typos in a file "-f", files in a directory "-d" (with "-r" recursively) is available.
+Search typos in a text file "-f", text files in directory "-d" (with "-r" recursively) and websites "-u".
 
-Search in websites "-u" is not available yet.
+Check files in html format has not available yet (maybe later).
 
 ### Requirements:
-Python 3+, Internet connection
+Python 3+, bs4, Internet connection
 
 ### Synopsis:
 ```
