@@ -108,11 +108,6 @@ class FileList(object):
         return self.file_list
 
 
-class Parser(object):
-    pass
-    #def __init__(self):
-
-
 class YaSpellParser(object):
     def __init__(self):
         self.start_time = datetime.datetime.now()
@@ -133,7 +128,6 @@ class YaSpellParser(object):
                      'word_in_dict': 0,
                      'words_len': 0,
                      'total_words_len': 0}
-
 
     def parse_html(self, link):
         # For parsing html,
