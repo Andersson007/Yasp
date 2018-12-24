@@ -7,9 +7,9 @@ Author: Andrey Klychkov <aaklychkov@mail.ru>
 
 Licence: GNU GPL v3
 
-Version: 0.4
+Version: 0.5
 
-Date: 10-06-2018
+Date: 24-12-2018
 
 ### Description:
 

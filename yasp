@@ -3,7 +3,7 @@
 # websites by using Yandex.Speller API
 #
 # Author: Andrey Klychkov <aakychkov@mail.ru>
-# Date: 16-04-2018
+# Date: 24-12-2018
 #
 # IMPORTANT:
 # 1. Max request length is 10000 characters
@@ -26,7 +26,7 @@ except ImportError as e:
     sys.exit(1)
 
 
-__VERSION__ = '0.4'
+__VERSION__ = '0.5'
 
 
 def parse_cli_args():
@@ -298,10 +298,10 @@ def main():
     if args.filename:
         parser.parse_file(args.filename)
 
-    if args.directory:
+    elif args.directory:
         parser.parse_dir(args.directory, args.recursive)
 
-    if args.html:
+    elif args.html:
         parser.parse_html(args.html)
 
     parser.print_stat()
