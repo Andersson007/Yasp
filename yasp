@@ -3,7 +3,7 @@
 # websites by using Yandex.Speller API
 #
 # Author: Andrey Klychkov <aakychkov@mail.ru>
-# Date: 24-12-2018
+# Date: 11-09-2019
 #
 # IMPORTANT:
 # 1. Max request length is 10000 characters
@@ -26,7 +26,7 @@ except ImportError as e:
     sys.exit(1)
 
 
-__VERSION__ = '0.5'
+__VERSION__ = '0.6'
 
 
 def parse_cli_args():
@@ -148,6 +148,11 @@ class YaSpellParser(object):
             print("%s: nothing to parse" % link)
 
     def __check_word(self, word):
+        try:
+            word.encode('ascii')
+        except UnicodeEncodeError:
+            return False
+
         for w in word:
             if not w.isalpha() and w not in "'-":
                 return False
