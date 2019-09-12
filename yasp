@@ -3,7 +3,7 @@
 # websites by using Yandex.Speller API
 #
 # Author: Andrey Klychkov <aakychkov@mail.ru>
-# Date: 11-09-2019
+# Date: 12-09-2019
 #
 # IMPORTANT:
 # 1. Max request length is 10000 characters
@@ -26,7 +26,7 @@ except ImportError as e:
     sys.exit(1)
 
 
-__VERSION__ = '0.6.1'
+__VERSION__ = '0.6.2'
 
 
 def parse_cli_args():
@@ -180,9 +180,13 @@ class YaSpellParser(object):
             d = line[0]
             source = d['word']
             suggest = ', '.join(d['s'])
-            path = self.word_dict[source][0][0]
-            lines = self.word_dict[source][1]
-            typos_list.append([path, lines, source, suggest])
+            try:
+                path = self.word_dict[source][0][0]
+                lines = self.word_dict[source][1]
+                typos_list.append([path, lines, source, suggest])
+            except KeyError:
+                print('KeyError occurred: source is "%s"' % source)
+                pass
 
         for i in sorted(typos_list, key=lambda x: (x[0], x[1])):
             print('%s : line %s : %s > %s ' % (i[0], i[1], i[2], i[3]))
