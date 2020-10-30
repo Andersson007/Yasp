@@ -3,19 +3,17 @@
 # websites by using Yandex.Speller API
 #
 # Author: Andrey Klychkov <aakychkov@mail.ru>
-# Date: 12-09-2019
+# Date: 30-10-2020
 #
 # IMPORTANT:
 # 1. Max request length is 10000 characters
 # 2. Yandex allows no more than 10000 requests per day
 # https://yandex.ru/legal/speller_api/
-#
 
 import argparse
 import datetime
 import json
 import os
-import re
 import sys
 import urllib.request as url
 
@@ -26,30 +24,54 @@ except ImportError as e:
     sys.exit(1)
 
 
-__VERSION__ = '0.6.2'
+__VERSION__ = '0.7.0'
 
 
 def parse_cli_args():
     parser = argparse.ArgumentParser(description="Search "
                                      "typos in files and websites "
                                      "by using Yandex.Speller API")
-    parser.add_argument("-r", "--recursive", dest="recursive",
-                        required=False, action="store_true",
+
+    parser.add_argument("-r", "--recursive",
+                        dest="recursive",
+                        action="store_true",
+                        required=False,
                         help="search recursively")
 
+    parser.add_argument("-s", "--stat",
+                        dest="print_stat",
+                        action="store_true",
+                        required=False,
+                        help="print statistics")
+
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-f", "--file", dest="filename",
-                       metavar="FILE", default=False,
-                       required=False, help="path to a FILE")
-    group.add_argument("-d", "--dir", dest="directory",
-                       required=False, default=False,
-                       help="path to a DIR", metavar="DIR")
-    group.add_argument("-u", "--url", dest="html", required=False,
-                       metavar="URL", default=False,
+
+    group.add_argument("-f", "--file",
+                       dest="filename",
+                       metavar="FILE",
+                       default=False,
+                       required=False,
+                       help="path to a FILE")
+
+    group.add_argument("-d", "--dir",
+                       dest="directory",
+                       metavar="DIR",
+                       default=False,
+                       required=False,
+                       help="path to a DIR")
+
+    group.add_argument("-u", "--url",
+                       dest="html",
+                       metavar="URL",
+                       default=False,
+                       required=False,
                        help="path to a web page (in progress)")
-    group.add_argument("--version", action="version",
+
+    group.add_argument("--version",
+                       action="version",
                        version=__VERSION__,
                        help="show version and exit")
+
     return parser.parse_args()
 
 
@@ -82,7 +104,7 @@ def is_binary(fname):
     return False
 
 
-class FileList(object):
+class FileList():
     def __init__(self, path):
         self.path = path
         self.file_list = []
@@ -95,7 +117,7 @@ class FileList(object):
                     if os.path.isfile(i):
                         self.file_list.append(i)
             else:
-                sys.stderr.write('DIR is not a directory\n')
+                sys.stderr.write('%s is not a directory\n' % self.path)
                 sys.exit(1)
 
         else:
@@ -104,8 +126,9 @@ class FileList(object):
                     for f in files:
                         self.file_list.append(os.path.join(root, f))
 
-            except Exception as e:
-                pass  # Handle exceptions here
+            except Exception:
+                # TODO: Exception handling here
+                pass
 
         return self.file_list
 
@@ -138,7 +161,6 @@ class YaSpellParser(object):
         data = soup.findAll(text=True)
 
         data = list(data)
-        result = []
         self.line_num = 1
         for line in data:
             self.__parse_line(str(line), 'url')
@@ -168,14 +190,13 @@ class YaSpellParser(object):
         if req_len > self.stat['max_fact_req_len']:
             self.stat['max_fact_req_len'] = req_len
 
-        request_time = datetime.datetime.now()
+        # request_time = datetime.datetime.now()
         response = url.urlopen(request)
-        resp_time = datetime.datetime.now() - request_time
-        print('\nresponse from Yandex received in %s' % resp_time)
+        # resp_time = datetime.datetime.now() - request_time
+        # print('\nresponse from Yandex received in %s\n' % resp_time)
         raw_string = response.read().decode('utf-8')
         json_data = [x for x in json.loads(raw_string) if x]
 
-        print()
         for line in json_data:
             d = line[0]
             source = d['word']
@@ -261,9 +282,6 @@ class YaSpellParser(object):
             self.stat['total_words_len'] += self.stat['words_len']
             self.stat['total_uniq_words'] += self.stat['word_in_dict']
 
-    ###################################
-    # There are class interfaces below:
-    ###################################
     def print_stat(self):
         exec_time = datetime.datetime.now() - self.start_time
         print('\nTotal statistics:\n'
@@ -314,7 +332,8 @@ def main():
     elif args.html:
         parser.parse_html(args.html)
 
-    parser.print_stat()
+    if args.print_stat:
+        parser.print_stat()
 
 
 if __name__ == '__main__':
