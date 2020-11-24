@@ -1,7 +1,7 @@
 # Yasp
 (Description is not finished)
 
-Yasp - Search typos in files and websites by using Yandex.Speller API
+Yasp - Search typos in stdout, files, in directories recursively, and websites by using Yandex.Speller API
 
 Author: Andrey Klychkov <aaklychkov@mail.ru>
 
@@ -40,8 +40,15 @@ yasp [-h] [-r] [-s] [-f FILE | -d DIR | -u URL | --version]
 
 ### Examples:
 
-yasp -f
+Passing text via stdin:
 ```
+echo "Helllo" | yast
+stdin : line [0] : helllo > hello, helloo, heello
+```
+
+Passing file name:
+```
+yasp -f test.txt
 testdir/test.txt : line [1] : programer > programmer, programmers, program
 testdir/test.txt : line [1, 2] : requirenments > requirements, requiredments, requirement
 testdir/test.txt : line [29, 147] : datbase > database, databases, datebase
@@ -51,8 +58,9 @@ testdir/test.txt : line [254] : nitification > nitrification, notification, noti
 testdir/test.txt : line [369] : inforamtion > information, informations, infromation
 ```
 
-yasp -f test.txt -s
+Print statistics:
 ```
+yasp -f test.txt -s
 testdir/test.txt : line [1] : programer > programmer, programmers, program
 testdir/test.txt : line [1, 2] : requirenments > requirements, requiredments, requirement
 testdir/test.txt : line [29, 147] : datbase > database, databases, datebase
@@ -73,8 +81,9 @@ max request len: 4074
 execution time: 0:00:01.574109
 ```
 
-yasp -d testdir -r
+Parse all files in directory recursively, show statistics:
 ```
+yasp -d testdir -r -s
 testdir/test.txt : line [1] : programer > programmer, programmers, program
 testdir/test.txt : line [1, 2] : requirenments > requirements, requiredments, requirement
 testdir/test.txt : line [29, 147] : datbase > database, databases, datebase
