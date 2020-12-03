@@ -1,19 +1,19 @@
 # Yasp
 (Description is not finished)
 
-Yasp - Search typos in stdout, files, in directories recursively, and websites by using Yandex.Speller API
+Yasp - Search typos in stdout, files, directories, and websites by using Yandex.Speller API
 
 Author: Andrey Klychkov <aaklychkov@mail.ru>
 
 Licence: GNU GPL v3
 
-Version: 0.7.0
+Version: 0.8.0
 
 Date: 30-10-2020
 
 ### Description:
 
-Information about Yandex.Speller is here <https://tech.yandex.ru/speller>.
+For more information about Yandex.Speller, refer to  <https://tech.yandex.ru/speller>.
 
 Search typos in a text file "-f", text files in a directory "-d" (with "-r" recursively) and websites "-u".
 
@@ -46,7 +46,7 @@ echo "Helllo" | yast
 stdin : line [0] : helllo > hello, helloo, heello
 ```
 
-Passing file name:
+Passing a file name:
 ```
 yasp -f test.txt
 testdir/test.txt : line [1] : programer > programmer, programmers, program
@@ -81,7 +81,7 @@ max request len: 4074
 execution time: 0:00:01.574109
 ```
 
-Parse all files in directory recursively, show statistics:
+Parse all files in a directory recursively, show statistics:
 ```
 yasp -d testdir -r -s
 testdir/test.txt : line [1] : programer > programmer, programmers, program
